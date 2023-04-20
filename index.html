@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>twtyper</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Courier New', monospace;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+
+    #editor,
+    #display {
+      flex-grow: 1;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 8px;
+      font-family: 'Courier New', monospace;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 50px);
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+
+    #editor {
+      opacity: 0;
+      z-index: 1;
+    }
+
+    #display {
+      pointer-events: none;
+      white-space: pre-wrap;
+    }
+
+    #theme-toggle,
+    #copy-content,
+    #counter {
+      position: absolute;
+      bottom: 5px;
+      cursor: pointer;
+      border: none;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 3px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #theme-toggle {
+      left: 5px;
+    }
+
+    #copy-content {
+      left: 130px;
+    }
+
+    #counter {
+      left: 240px;
+      pointer-events: none;
+    }
+
+    /* Light mode */
+    body.light-mode,
+    .light-mode #editor,
+    .light-mode #display {
+      background-color: #ffffff;
+      color: #333333;
+    }
+
+    .light-mode #theme-toggle,
+    .light-mode #copy-content,
+    .light-mode #counter {
+      background-color: #333333;
+      color: #ffffff;
+    }
+
+    /* Dark mode */
+    body.dark-mode,
+    .dark-mode #editor,
+    .dark-mode #display {
+      background-color: #282c34;
+      color: #abb2bf;
+    }
+
+    .dark-mode #theme-toggle,
+    .dark-mode #copy-content,
+    .dark-mode #counter {
+      background-color: #abb2bf;
+      color: #282c34;
+    }
+  </style>
+</head>
+
+<body class="dark-mode">
+  <div id="app">
+    <textarea id="editor"></textarea>
+    <div id="display"></div>
+    <button id="theme-toggle">Toggle Theme</button>
+    <button id="copy-content">Copy Content</button>
+    <button id="counter" disabled>0</button>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const display = document.getElementById('display');
+    const counter = document.getElementById('counter');
+    const themeToggle = document.getElementById('theme-toggle');
+    const copyContent = document.getElementById('copy-content');
+
+    function replaceHangul(text) {
+      return text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, '\u25A1');
+    }
+
+    editor.addEventListener('input', () => {
+      const hangulCount = (editor.value.match(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g) || []).length;
+      const totalChars = editor.value.length + hangulCount;
+      counter.textContent = totalChars;
+
+      if (totalChars > 240) {
+        counter.style.color = "red";
+      } else {
+        counter.style.color = "";
+      }
+
+      display.textContent = replaceHangul(editor.value);
+    });
+
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      document.body.classList.toggle('light-mode');
+    });
+
+    copyContent.addEventListener('click', () => {
+      editor.select();
+      document.execCommand('copy');
+    });
+  </script>
+</body>
+
+</html>
