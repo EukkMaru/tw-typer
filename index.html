@@ -38,7 +38,6 @@
       white-space: pre-wrap;
     }
 
-
     #editor {
       opacity: 0;
       z-index: 1;
@@ -51,7 +50,9 @@
 
     #theme-toggle,
     #copy-content,
-    #counter {
+    #counter,
+    #cut-block,
+    #chain-counter {
       position: absolute;
       bottom: 5px;
       cursor: pointer;
@@ -75,6 +76,17 @@
       pointer-events: none;
     }
 
+    #cut-block {
+      left: 300px;
+    }
+
+    #chain-counter {
+      left: 384px;
+      pointer-events: none;
+    }
+
+
+
     /* Light mode */
     body.light-mode,
     .light-mode #editor,
@@ -85,9 +97,15 @@
 
     .light-mode #theme-toggle,
     .light-mode #copy-content,
-    .light-mode #counter {
+    .light-mode #counter,
+    .light-mode #cut-block,
+    .light-mode #chain-counter {
       background-color: #333333;
       color: #ffffff;
+    }
+
+    .light-mode .alternate-block {
+      color: darkblue;
     }
 
     /* Dark mode */
@@ -100,11 +118,19 @@
 
     .dark-mode #theme-toggle,
     .dark-mode #copy-content,
-    .dark-mode #counter {
+    .dark-mode #counter,
+    .dark-mode #cut-block,
+    .dark-mode #chain-counter {
       background-color: #abb2bf;
       color: #282c34;
     }
+
+    .dark-mode .alternate-block {
+      color: lightblue;
+    }
   </style>
+
+
 </head>
 
 <body class="dark-mode">
@@ -114,6 +140,8 @@
     <button id="theme-toggle">Toggle Theme</button>
     <button id="copy-content">Copy Content</button>
     <button id="counter" disabled>0</button>
+    <button id="cut-block">Cut Block</button>
+    <button id="chain-counter" class="chain-counter" disabled>0</button>
   </div>
 
   <script>
@@ -122,9 +150,22 @@
     const counter = document.getElementById('counter');
     const themeToggle = document.getElementById('theme-toggle');
     const copyContent = document.getElementById('copy-content');
+    const chainCounter = document.getElementById('chain-counter');
+    const cutBlock = document.getElementById('cut-block');
 
-    function replaceHangul(text) {
-      return text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, '\u25A1');
+    cutBlock.addEventListener('click', () => {
+      // Add 
+    });
+
+
+    function replaceHangul(text, index) {
+      const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
+      function(match) {return String.fromCharCode(0x16A0 + (match.charCodeAt(0) % (0x16FF-0x16A0)))}/*'\u25A1'*/)
+      .replace(/[()]/g, '{par}').replace(/[\-]/g, '{das}').replace(/\.\.\./g, '{elp}');
+      if (index % 2 === 1) {
+        return `<span class="alternate-block">${replacedText}</span>`;
+      }
+      return replacedText;
     }
 
     editor.addEventListener('input', () => {
@@ -138,8 +179,44 @@
         counter.style.color = "";
       }
 
-      display.textContent = replaceHangul(editor.value);
+      const splitText = editor.value.split('\n>\n');
+      const cursorPosition = editor.selectionStart;
+      let currentElementIndex = 0;
+      let accumulatedLength = 0;
+
+      for (let i = 0; i < splitText.length; i++) {
+        accumulatedLength += splitText[i].length + (i > 0 ? 3 : 0); // +3 for the removed '\n>\n'
+        if (cursorPosition <= accumulatedLength) {
+          currentElementIndex = i;
+          break;
+        }
+      }
+
+      const currentElementHangulCount = (splitText[currentElementIndex].match(
+        /[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g) || []).length;
+      const currentElementTotalChars = splitText.length > 1 ?
+        splitText[currentElementIndex].length + currentElementHangulCount + (currentElementIndex < splitText
+          .length - 1 ? 2 : 0) :
+        totalChars;
+
+      chainCounter.textContent = currentElementTotalChars;
+
+      if (currentElementTotalChars > 240) {
+        chainCounter.style.color = "red";
+      } else {
+        chainCounter.style.color = "blue";
+      }
+
+      let displayText = '';
+      for (let i = 0; i < splitText.length; i++) {
+        displayText += replaceHangul(splitText[i], i);
+        if (i < splitText.length - 1) {
+          displayText += '\n>\n';
+        }
+      }
+      display.innerHTML = displayText;
     });
+
 
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('dark-mode');
@@ -149,6 +226,35 @@
     copyContent.addEventListener('click', () => {
       editor.select();
       document.execCommand('copy');
+    });
+
+    cutBlock.addEventListener('click', () => {
+      const splitText = editor.value.split('\n>\n');
+      const cursorPosition = editor.selectionStart;
+      let currentElementIndex = 0;
+      let accumulatedLength = 0;
+
+      for (let i = 0; i < splitText.length; i++) {
+        accumulatedLength += splitText[i].length + (i < splitText.length - 1 ? 3 : 0); // +3 for the removed '\n>\n'
+        if (cursorPosition <= accumulatedLength) {
+          currentElementIndex = i;
+          break;
+        }
+      }
+
+      const selectedBlock = splitText[currentElementIndex];
+      const textarea = document.createElement('textarea');
+      textarea.textContent = selectedBlock;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      // Remove the selected block and the '\n>' if it's not the last block
+      splitText.splice(currentElementIndex, 1);
+      const updatedText = splitText.join('\n>\n');
+      editor.value = updatedText;
+      display.textContent = replaceHangul(updatedText);
     });
   </script>
 </body>
