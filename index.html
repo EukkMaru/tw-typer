@@ -161,7 +161,7 @@
     function replaceHangul(text, index) {
       const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
       function(match) {return String.fromCharCode(0x16A0 + (match.charCodeAt(0) % (0x16FF-0x16A0)))}/*'\u25A1'*/)
-      .replace(/[()]/g, '{par}').replace(/[\-]/g, '{das}').replace(/\.\.\./g, '{elp}');
+      .replace(/[()]/g, '{par}').replace(/[\-]/g, '{das}').replace(/\.\.\./g, '{elp}').replace(/\u2661/g, '{hrt}');
       if (index % 2 === 1) {
         return `<span class="alternate-block">${replacedText}</span>`;
       }
@@ -169,6 +169,8 @@
     }
 
     editor.addEventListener('input', () => {
+      const updatedValue = editor.value.replace(/hh/g, '\u2661');
+      editor.value = updatedValue;
       const hangulCount = (editor.value.match(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g) || []).length;
       const totalChars = editor.value.length + hangulCount;
       counter.textContent = totalChars;
