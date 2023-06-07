@@ -9,6 +9,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
     },
+    autoHideMenuBar: true
   });
 
   win.loadFile('index.html');

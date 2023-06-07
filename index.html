@@ -136,7 +136,7 @@
 <body class="dark-mode">
   <div id="app">
     <textarea id="editor"></textarea>
-    <div id="display"></div>
+    <div id="display" style="font-family: Arial;"></div>
     <button id="theme-toggle">Toggle Theme</button>
     <button id="copy-content">Copy Content</button>
     <button id="counter" disabled>0</button>
@@ -159,8 +159,10 @@
 
 
     function replaceHangul(text, index) {
+      //const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
+      //function(match) {return String.fromCharCode(0x16A0 + (match.charCodeAt(0) % (0x16FF-0x16A0)))}/*'\u25A1'*/)
       const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
-      function(match) {return String.fromCharCode(0x16A0 + (match.charCodeAt(0) % (0x16FF-0x16A0)))}/*'\u25A1'*/)
+      function(match) {return String.fromCharCode(0x430 + (match.charCodeAt(0) % (0x44F-0x430)))})
       .replace(/[()]/g, '{par}').replace(/[\-]/g, '{das}').replace(/\.\.\./g, '{elp}').replace(/\u2661/g, '{hrt}');
       if (index % 2 === 1) {
         return `<span class="alternate-block">${replacedText}</span>`;
