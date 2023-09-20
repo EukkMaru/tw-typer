@@ -161,9 +161,26 @@
     function replaceHangul(text, index) {
       //const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
       //function(match) {return String.fromCharCode(0x16A0 + (match.charCodeAt(0) % (0x16FF-0x16A0)))}/*'\u25A1'*/)
-      const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
-      function(match) {return String.fromCharCode(0x430 + (match.charCodeAt(0) % (0x44F-0x430)))})
-      .replace(/[()]/g, '{par}').replace(/[\-]/g, '{das}').replace(/\.\.\./g, '{elp}').replace(/\u2661/g, '{hrt}');
+      
+      //const replacedText = text.replace(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g, 
+      //Depracated; convert all hangul
+
+      //const replacedText = text.replace(/[\uAC00-\uD7AF]/g, function(match) {return String.fromCharCode(0x4DC0 + (match.charCodeAt(0) % (0x4DFF-0x4DC0)))}).replace(/[\u3130-\u318F\u1100-\u11FF]/g, '\uFE57').replace(/[()]/g, '{par}').replace(/[-—]/g, '{das}').replace(/\.\.\./g, '{elp}').replace(/\u2661/g, '{hrt}').replace(/\"/g, '{quo}').replace(/,/g, '{com}').replace(/!/g, '{exc}').replace(/\?/g, '{que}').replace(/\./g, '{per}');
+      const conversionTable = new Map([
+        [/[\uAC00-\uD7AF]/g, function(match) {return String.fromCharCode(0x4DC0 + (match.charCodeAt(0) % (0x4DFF-0x4DC0)))}],
+        [/[\u3130-\u318F\u1100-\u11FF]/g, '\uFE57'],
+        [/[()]/g, '{par}'],
+        [/-/g, '\u2014'],
+        [/\.\.\./g, '{elp}'],
+        [/\u2661/g, '{hrt}'],
+        [/\"/g, '{quo}'],
+        [/,/g, '{com}'],
+        [/!/g, '{exc}'],
+        [/\?/g, '{que}'],
+        [/\./g, '{per}']
+      ]);
+      const replacedText = Array.from(conversionTable).reduce((acc, [regex, replacement]) => acc.replace(regex, replacement), text); 
+
       if (index % 2 === 1) {
         return `<span class="alternate-block">${replacedText}</span>`;
       }
@@ -171,7 +188,7 @@
     }
 
     editor.addEventListener('input', () => {
-      const updatedValue = editor.value.replace(/hh/g, '\u2661');
+      const updatedValue = editor.value.replace(/hh/g, '\u2661').replace(/[\-]/g, '\u2014');
       editor.value = updatedValue;
       const hangulCount = (editor.value.match(/[\u3130-\u318F\u1100-\u11FF\uAC00-\uD7AF]/g) || []).length;
       const totalChars = editor.value.length + hangulCount;
