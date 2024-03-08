@@ -186,7 +186,7 @@
       }
       return replacedText;
     }
-
+    
     editor.addEventListener('input', () => {
       const updatedValue = editor.value.replace(/hh/g, '\u2661').replace(/[\-]/g, '\u2014');
       editor.value = updatedValue;
